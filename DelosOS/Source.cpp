@@ -56,6 +56,7 @@ public:
 			}
 		}
 		vector<string>* vecs = new vector<string>[this->rank];
+		hi this
 		vecs[this->rank - 1] = vec;
 		for (int i = this->rank - 1; i > 0; i--) {
 			row = "[";
