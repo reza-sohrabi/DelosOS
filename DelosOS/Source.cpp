@@ -3,9 +3,13 @@
 #include <random>
 #include<string>
 #include <sstream> 
+#include <math.h>
 using namespace std;
 template<class type> class Tensor {
 public:
+	Tensor() {
+
+	}
 	Tensor(vector<int> shape, bool randomInitialization) {
 		this->rank = shape.size();
 		this->size = 1;
@@ -13,8 +17,8 @@ public:
 		for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
 			size *= *it;
 		}
-		data = new type[this->size];
 		if (randomInitialization && (is_same< type, double>::value)) {
+			data = new type[this->size];
 			default_random_engine generator;
 			normal_distribution<double> distribution(0, 1);
 			for (int i = 0; i < size; i++) {
@@ -91,6 +95,38 @@ public:
 		return vecs[0].at(0);
 
 	}
+	static Tensor<double>* matmul(Tensor<double> arg1, Tensor<double> arg2) {
+		try
+		{
+			if (arg1.getRank > 2) || (arg2.getRank > 2) || (arg1.getShape.at(1) != arg1.getShape.at(0)) {
+				throw 0
+			}
+		}
+		catch (int e)
+		{
+			cout << "Tensors not compatible for matrix multiplication" << '\n';
+		}
+		int out_size = arg1.getShape.at(0)*arg1.getShape.at(1);
+		vector<int> out_shape{ arg1.getShape.at(0),arg1.getShape.at(1) };
+		double* out_data = new double[out_size];
+		int out_index = 0;
+		int sum = 0;
+		int rows = arg1.getShape.at(0);
+		int columns = arg1.getShape.at(1);
+		double* mat1 = arg1.getLinearData();
+		double* mat2 = arg2.getLinearData();
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
+				sum += mat1[i*columns + j] * mat2[i + j*columns];	
+			}
+			out_data[out_index] = sum;
+			out_index++;
+			sum = 0;
+		}
+		Tensor<double>* out = new Tensor<double>;
+		out->setLinearData(out_data, out_shape);
+		return out;		
+	}
 protected:
 	type * data;
 	int rank;
@@ -102,6 +138,77 @@ protected:
 		return sstr.str();
 	}
 
+};
+class layer {
+public:
+private:
+
+};
+class util {
+public:
+	static double sigmoid(double in) {
+		return 1.0 / (1 + exp(-in));
+	}
+	static double tanh(double in) {
+		return (exp(in)- exp(-in)) / (exp(in) + exp(-in));
+	}
+	static double relu(double in) {
+		return max(0.0, in);
+	}
+};
+class linearLayer: public layer{
+public:
+	linearLayer() {
+	}
+	~linearLayer() {
+		delete this->weights;
+	}
+	linearLayer(int n_units, int n_inputs, string activation) {
+		this->n_units = n_units;
+		this->n_inputs = n_inputs;
+		this->activation = activation;
+		shape.push_back(n_inputs);
+		shape.push_back(n_units);
+		weights = new Tensor<double> (shape, true);
+	}
+	Tensor<double>* getWeights() {
+		return this->weights;
+	}
+	void setWeights(double* weights, vector<int> shape) {
+		this->weights->setLinearData(weights, shape);
+	}
+	Tensor<double>* activate(Tensor<double>* in) {
+		if(this->activation=="none")
+			return in;
+		Tensor<double>* out = new Tensor<double>;
+		double* out_data = new double[in->getSize];
+		double* in_data = in->getLinearData;
+		for (int i = 0; i < in->getSize; i++) {
+			if (this->activation == "sigmoid") {
+				out_data[i] = util::sigmoid(in_data[i]);
+			}
+			else if (this->activation == "relu") {
+				out_data[i] = util::relu(in_data[i]);
+			}
+			else if (this->activation == "tanh") {
+				out_data[i] = util::tanh(in_data[i]);
+			}
+		}
+		out->setLinearData(out_data, in->getShape);
+		return out;
+	}
+	Tensor<double>* preActivate(Tensor<double> in) {
+		return Tensor<double>::matmul(in, *(this->weights));
+	}
+	Tensor<double>* forward(Tensor<double> in) {
+		return this->activate(this->preActivate(in));
+	}
+private:
+	int n_units;
+	int n_inputs;
+	string activation;
+	vector<int> shape;
+	Tensor<double>* weights;
 };
 void test() {
 	vector<int> s;
