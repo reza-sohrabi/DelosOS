@@ -23,6 +23,9 @@ public:
 		}
 
 	}
+	~Tensor() {
+		delete[] this->data;
+	}
 	int getRank() {
 		return this->rank;
 	}
@@ -35,8 +38,19 @@ public:
 	type* getLinearData() {
 		return this->data;
 	}
+	void setLinearData(type* new_data , vector<int> shape) {
+		delete[] this->data;
+		int size;
+		for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
+			size *= *it;
+		}
+		this->size = size;
+		this->rank = shape.size();
+		this->shape = shape;
+		this->data = new_data;
+	}
 	type* getDataFrom(string pattern) {
-
+		//TODO
 		return this->data;
 	}
 
@@ -61,7 +75,7 @@ public:
 			row = "[";
 			for (int j = 1; j <= vecs[i].size(); j++) {
 				if (j%this->shape[i-1] != 0) {
-					row.append( " "+vecs[i].at(j-1)+ ",\n ");
+					row.append( " "+vecs[i].at(j-1)+ ",\n");
 				}
 				else {
 					row.append(vecs[i].at(j-1) + "]");
@@ -89,9 +103,7 @@ protected:
 	}
 
 };
-int main() {
-	double sa;
-
+void test() {
 	vector<int> s;
 	s.push_back(4);
 	s.push_back(3);
@@ -99,6 +111,11 @@ int main() {
 	s.push_back(2);
 	Tensor<double> T(s, true);
 	cout << T.toString();
+}
+int main() {
+	
+
+	test();
 	char c = getchar();
 	return 0;
 
