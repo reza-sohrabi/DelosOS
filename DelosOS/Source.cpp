@@ -10,14 +10,15 @@ public:
 	Tensor() {
 
 	}
-	Tensor(vector<int> shape, bool randomInitialization) {
+	Tensor(vector<int> shape, bool random_initialization) {
 		this->rank = shape.size();
-		this->size = 1;
 		this->shape = shape;
+		int size = 1;
 		for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
 			size *= *it;
 		}
-		if (randomInitialization && (is_same< type, double>::value)) {
+		this->size = size;
+		if (random_initialization && (is_same< type, double>::value)) {
 			data = new type[this->size];
 			default_random_engine generator;
 			normal_distribution<double> distribution(0, 1);
@@ -27,9 +28,9 @@ public:
 		}
 
 	}
-	~Tensor() {
+	/*~Tensor() {
 		delete[] this->data;
-	}
+	}*/
 	int getRank() {
 		return this->rank;
 	}
@@ -44,7 +45,7 @@ public:
 	}
 	void setLinearData(type* new_data , vector<int> shape) {
 		delete[] this->data;
-		int size;
+		int size=1;
 		for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
 			size *= *it;
 		}
@@ -98,30 +99,33 @@ public:
 	static Tensor<double>* matmul(Tensor<double> arg1, Tensor<double> arg2) {
 		try
 		{
-			if (arg1.getRank > 2) || (arg2.getRank > 2) || (arg1.getShape.at(1) != arg1.getShape.at(0)) {
-				throw 0
+			if ((arg1.getRank() > 2) || (arg2.getRank() > 2) || (arg1.getShape().at(1) != arg2.getShape().at(0))) {
+				throw 0;
 			}
 		}
 		catch (int e)
 		{
 			cout << "Tensors not compatible for matrix multiplication" << '\n';
 		}
-		int out_size = arg1.getShape.at(0)*arg1.getShape.at(1);
-		vector<int> out_shape{ arg1.getShape.at(0),arg1.getShape.at(1) };
+		cout << arg2.toString()<<endl << arg2.getSize();
+		int out_size = arg1.getShape().at(0)*arg2.getShape().at(1);
+		vector<int> out_shape{ arg1.getShape().at(0),arg2.getShape().at(1) };
 		double* out_data = new double[out_size];
 		int out_index = 0;
-		int sum = 0;
-		int rows = arg1.getShape.at(0);
-		int columns = arg1.getShape.at(1);
+		double sum = 0.0;
+		int rows = arg1.getShape().at(0);
+		int columns = arg1.getShape().at(1);
+		int columns_out = arg2.getShape().at(1);
 		double* mat1 = arg1.getLinearData();
 		double* mat2 = arg2.getLinearData();
 		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < columns; j++) {
-				sum += mat1[i*columns + j] * mat2[i + j*columns];	
+			for (int j = 0; j < columns_out; j++) {
+				for (int k = 0; k < columns; k++)
+					sum += mat1[i*columns + k] * mat2[j + k*columns_out];	
+				out_data[out_index] = sum;
+				out_index++;
+				sum = 0.0;
 			}
-			out_data[out_index] = sum;
-			out_index++;
-			sum = 0;
 		}
 		Tensor<double>* out = new Tensor<double>;
 		out->setLinearData(out_data, out_shape);
@@ -181,9 +185,9 @@ public:
 		if(this->activation=="none")
 			return in;
 		Tensor<double>* out = new Tensor<double>;
-		double* out_data = new double[in->getSize];
-		double* in_data = in->getLinearData;
-		for (int i = 0; i < in->getSize; i++) {
+		double* out_data = new double[in->getSize()];
+		double* in_data = in->getLinearData();
+		for (int i = 0; i < in->getSize(); i++) {
 			if (this->activation == "sigmoid") {
 				out_data[i] = util::sigmoid(in_data[i]);
 			}
@@ -194,7 +198,7 @@ public:
 				out_data[i] = util::tanh(in_data[i]);
 			}
 		}
-		out->setLinearData(out_data, in->getShape);
+		out->setLinearData(out_data, in->getShape());
 		return out;
 	}
 	Tensor<double>* preActivate(Tensor<double> in) {
@@ -211,13 +215,13 @@ private:
 	Tensor<double>* weights;
 };
 void test() {
-	vector<int> s;
-	s.push_back(4);
-	s.push_back(3);
-	s.push_back(2);
-	s.push_back(2);
-	Tensor<double> T(s, true);
-	cout << T.toString();
+	vector<int> s{2,3};
+	vector<int> ss{3,2};
+	Tensor<double> T1(s, true);
+	Tensor<double> T2(ss, true);
+	cout << T1.toString()<<endl;
+	cout << T2.toString() << endl;
+	cout << Tensor<double>::matmul(T1,T2)->toString();
 }
 int main() {
 	
