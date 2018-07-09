@@ -4,6 +4,7 @@
 #include<string>
 #include <sstream> 
 #include <math.h>
+#include <iomanip>
 using namespace std;
 template<class type> class Tensor {
 public:
@@ -18,8 +19,8 @@ public:
 			size *= *it;
 		}
 		this->size = size;
+		data = new type[this->size];
 		if (random_initialization && (is_same< type, double>::value)) {
-			data = new type[this->size];
 			default_random_engine generator;
 			normal_distribution<double> distribution(0, 1);
 			for (int i = 0; i < size; i++) {
@@ -58,43 +59,27 @@ public:
 		//TODO
 		return this->data;
 	}
-
-	string toString() {
-		
-		int counter = 0;
-		vector<string> vec;
-		string row = "[";
-		for (int j = 1; j <= this->size; j++) {
-			if (j%this->shape[this->rank - 1] != 0) {
-				row.append(to_string(this->data[j-1]) + ", ");
-			}
-			else {
-				row.append(to_string(this->data[j-1]) + "]");
-					vec.push_back(row);
-				row = "[";
-			}
+	string toString()
+	{
+		int rank = this->getRank();
+		int* shape = new int[rank];
+		for (int i = 0; i < rank; i++)
+			shape[i] = this->getShape()[i];
+		string s = string(rank, '[');
+		int num_brackets = 0;
+		for (int i = 1; i <= this->getSize(); i++) {
+			num_brackets = getNumBrackets(i, rank, shape);
+			s.append(to_string(this->data[i - 1]));
+			if (num_brackets > 0)
+				s.append(string(num_brackets, ']') + ",\n" + string(rank - num_brackets, ' ') + string(num_brackets, '['));
+			else
+				s.append(", ");
 		}
-		vector<string>* vecs = new vector<string>[this->rank];
-		vecs[this->rank - 1] = vec;
-		for (int i = this->rank - 1; i > 0; i--) {
-			row = "[";
-			for (int j = 1; j <= vecs[i].size(); j++) {
-				if (j%this->shape[i-1] != 0) {
-					row.append( " "+vecs[i].at(j-1)+ ",\n");
-				}
-				else {
-					row.append(vecs[i].at(j-1) + "]");
-					vecs[i-1].push_back(row);
-					row = "[";
-				}
-
-			}
-		}
-		
-
-		
-		return vecs[0].at(0);
-
+		return s.substr(0, s.size()-rank-2);
+	}
+	void expandDim() {
+		this->rank++;
+		this->shape.push_back(1);
 	}
 	static Tensor<double>* matmul(Tensor<double> arg1, Tensor<double> arg2) {
 		try
@@ -105,9 +90,14 @@ public:
 		}
 		catch (int e)
 		{
-			cout << "Tensors not compatible for matrix multiplication" << '\n';
+			cout << "Tensors not compatible for matrix multiplication" <<e<< '\n';
 		}
-		cout << arg2.toString()<<endl << arg2.getSize();
+		if (arg1.getRank() == 1) {
+			arg1.expandDim();
+		}
+		if (arg1.getRank() == 1) {
+			arg2.expandDim();
+		}
 		int out_size = arg1.getShape().at(0)*arg2.getShape().at(1);
 		vector<int> out_shape{ arg1.getShape().at(0),arg2.getShape().at(1) };
 		double* out_data = new double[out_size];
@@ -138,8 +128,24 @@ protected:
 	vector<int> shape;
 	static string to_string(type const& value) {
 		ostringstream sstr;
-		sstr << value;
-		return sstr.str();
+		sstr << fixed << setprecision(5) << value;
+		string s = sstr.str();
+		if (value > 0)
+			s = ' ' + s;
+		return s;
+	}
+private:
+	int getNumBrackets(int i, int rank, int* shape) {
+		int result = 0;
+		for (int j = rank - 1; j >= 0; j--) {
+			if (i%shape[j] == 0) {
+				result++;
+				i /= shape[j];
+			}
+			else
+				break;
+		}
+		return result;
 	}
 
 };
@@ -215,7 +221,7 @@ private:
 	Tensor<double>* weights;
 };
 void test() {
-	vector<int> s{2,3};
+	vector<int> s{2,3,3};
 	vector<int> ss{3,2};
 	Tensor<double> T1(s, true);
 	Tensor<double> T2(ss, true);
