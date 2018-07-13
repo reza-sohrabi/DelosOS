@@ -220,6 +220,22 @@ private:
 	vector<int> shape;
 	Tensor<double>* weights;
 };
+class model {
+public:
+private:
+
+
+};
+class sequential : public model {
+public:
+	sequential(){}
+	sequential(vector<layer> layers) {
+		this->layers = layers;
+
+	}
+private:
+	vector<layer> layers;
+};
 void test() {
 	vector<int> s{2,3,3};
 	vector<int> ss{3,2};
