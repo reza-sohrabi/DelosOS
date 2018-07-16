@@ -29,9 +29,9 @@ public:
 		}
 
 	}
-	/*~Tensor() {
+	~Tensor() {
 		delete[] this->data;
-	}*/
+	}
 	int getRank() {
 		return this->rank;
 	}
@@ -225,6 +225,14 @@ public:
 private:
 
 
+};
+class optimizer {
+public:
+private:
+};
+class SGD : public optimizer {
+public:
+private:
 };
 class sequential : public model {
 public:
