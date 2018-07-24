@@ -149,11 +149,7 @@ private:
 	}
 
 };
-class layer {
-public:
-private:
 
-};
 class util {
 public:
 	static double sigmoid(double in) {
@@ -165,6 +161,14 @@ public:
 	static double relu(double in) {
 		return max(0.0, in);
 	}
+};
+class layer {
+public:
+	virtual Tensor<double>* forward(Tensor<double> in) {
+		return &in;
+	}
+private:
+
 };
 class linearLayer: public layer{
 public:
@@ -237,12 +241,25 @@ private:
 class sequential : public model {
 public:
 	sequential(){}
-	sequential(vector<layer> layers) {
+	sequential(vector<layer> layers, Tensor<double> input) {
 		this->layers = layers;
-
+		this->input = input;
+	}
+	
+	Tensor<double>* forward(Tensor<double> input) {
+		Tensor<double>* current_out = &input;
+		for (vector<layer>::iterator it = this->layers.begin(); it != this->layers.end(); it++) {
+			current_out = it->forward(*current_out);
+		}
+		return current_out;
+			
+	}
+	Tensor<double>* forward() {
+		return this->forward(this->input);
 	}
 private:
 	vector<layer> layers;
+	Tensor<double> input;
 };
 void test() {
 	vector<int> s{2,3,3};
