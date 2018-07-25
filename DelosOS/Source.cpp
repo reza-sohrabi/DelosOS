@@ -184,6 +184,8 @@ public:
 		shape.push_back(n_inputs);
 		shape.push_back(n_units);
 		weights = new Tensor<double> (shape, true);
+		vector<int> bias_shape = { n_units };
+		bias = new Tensor<double>(bias_shape, true);
 	}
 	Tensor<double>* getWeights() {
 		return this->weights;
@@ -223,6 +225,7 @@ private:
 	string activation;
 	vector<int> shape;
 	Tensor<double>* weights;
+	Tensor<double>* bias;
 };
 class model {
 public:
