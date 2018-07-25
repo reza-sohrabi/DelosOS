@@ -150,7 +150,7 @@ private:
 
 };
 
-class util {
+class nnUtil {
 public:
 	static double sigmoid(double in) {
 		return 1.0 / (1 + exp(-in));
@@ -201,13 +201,13 @@ public:
 		double* in_data = in->getLinearData();
 		for (int i = 0; i < in->getSize(); i++) {
 			if (this->activation == "sigmoid") {
-				out_data[i] = util::sigmoid(in_data[i]);
+				out_data[i] = nnUtil::sigmoid(in_data[i]);
 			}
 			else if (this->activation == "relu") {
-				out_data[i] = util::relu(in_data[i]);
+				out_data[i] = nnUtil::relu(in_data[i]);
 			}
 			else if (this->activation == "tanh") {
-				out_data[i] = util::tanh(in_data[i]);
+				out_data[i] = nnUtil::tanh(in_data[i]);
 			}
 		}
 		out->setLinearData(out_data, in->getShape());
