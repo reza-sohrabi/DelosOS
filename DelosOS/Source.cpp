@@ -75,13 +75,14 @@ public:
 			else
 				s.append(", ");
 		}
+		delete shape;
 		return s.substr(0, s.size()-rank-2);
 	}
 	void expandDim() {
 		this->rank++;
 		this->shape.push_back(1);
 	}
-	static Tensor<double>* matmul(Tensor<double> arg1, Tensor<double> arg2) {
+	static Tensor<double>& matmul(Tensor<double> arg1, Tensor<double> arg2) {
 		try
 		{
 			if ((arg1.getRank() > 2) || (arg2.getRank() > 2) || (arg1.getShape().at(1) != arg2.getShape().at(0))) {
@@ -117,8 +118,8 @@ public:
 				sum = 0.0;
 			}
 		}
-		Tensor<double>* out = new Tensor<double>;
-		out->setLinearData(out_data, out_shape);
+		Tensor<double> out;
+		out.setLinearData(out_data, out_shape);
 		return out;		
 	}
 protected:
@@ -164,8 +165,8 @@ public:
 };
 class layer {
 public:
-	virtual Tensor<double>* forward(Tensor<double> in) {
-		return &in;
+	virtual Tensor<double>& forward(Tensor<double>& in) {
+		return in;
 	}
 private:
 
@@ -176,6 +177,7 @@ public:
 	}
 	~linearLayer() {
 		delete this->weights;
+		delete this->bias;
 	}
 	linearLayer(int n_units, int n_inputs, string activation) {
 		this->n_units = n_units;
@@ -193,13 +195,13 @@ public:
 	void setWeights(double* weights, vector<int> shape) {
 		this->weights->setLinearData(weights, shape);
 	}
-	Tensor<double>* activate(Tensor<double>* in) {
+	Tensor<double>& activate(Tensor<double>& in) {
 		if(this->activation=="none")
 			return in;
-		Tensor<double>* out = new Tensor<double>;
-		double* out_data = new double[in->getSize()];
-		double* in_data = in->getLinearData();
-		for (int i = 0; i < in->getSize(); i++) {
+		Tensor<double> out;
+		double* out_data = new double[in.getSize()];
+		double* in_data = in.getLinearData();
+		for (int i = 0; i < in.getSize(); i++) {
 			if (this->activation == "sigmoid") {
 				out_data[i] = nnUtil::sigmoid(in_data[i]);
 			}
@@ -210,13 +212,13 @@ public:
 				out_data[i] = nnUtil::tanh(in_data[i]);
 			}
 		}
-		out->setLinearData(out_data, in->getShape());
+		out.setLinearData(out_data, in.getShape());
 		return out;
 	}
-	Tensor<double>* preActivate(Tensor<double> in) {
-		return Tensor<double>::matmul(in, *(this->weights));
+	Tensor<double>& preActivate(Tensor<double>& in) {
+		return Tensor<double>::matmul(in, *(this->weights))+this->bias;
 	}
-	Tensor<double>* forward(Tensor<double> in) {
+	Tensor<double>& forward(Tensor<double>& in) {
 		return this->activate(this->preActivate(in));
 	}
 private:
