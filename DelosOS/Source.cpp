@@ -75,7 +75,7 @@ public:
 			else
 				s.append(", ");
 		}
-		delete shape;
+		delete[] shape;
 		return s.substr(0, s.size()-rank-2);
 	}
 	void expandDim() {
@@ -121,6 +121,82 @@ public:
 		Tensor<double> out;
 		out.setLinearData(out_data, out_shape);
 		return out;		
+	}
+	Tensor<double>& operator+(Tensor<double> other) {
+		Tensor<double> this_tensor = *this;
+		Tensor<double> other_tensor = other;
+		int this_rank = this->rank;
+		int other_rank = other.rank;
+		int dif_rank = abs(this_rank - other_rank);
+		vector<int> this_shape = this->shape;
+		vector<int> other_shape = other.shape;
+		if (this_rank >= other_rank) {
+			for (int i = 0; i < dif_rank; i++)
+				other_shape.insert(0, 1);
+			out_rank = this_rank;
+		}
+		else {
+			for (int i = 0; i < dif_rank; i++)
+				this_shape.insert(0, 1);
+			out_rank = other_rank;
+		}
+		int out_size = 1;
+		for (int i = 0; i < out_rank; i++)
+			if (this_shape.at(i) > other_shape.at(i)
+				out_size * = this_shape.at(i);
+			else
+				out_size *= other_shape.at(i)
+
+		try
+		{
+			double * this_data = new double[out_size];
+			double * other_data = new double[out_size];
+			int current_dim_prod = 1;
+			int this_curser = 0;
+			int other_curser = 0;
+			for (int i = out_rank-1; i <= 0; i--) {
+				
+				if (this_shape.at(i) != other_shape.at(i))
+					if (this_shape.at(i) == 1) {
+						this_shape.at(i) = other_shape.at(i);
+						for (int j = this_curser; j < this_curser + current_dim_prod * other_shape.at(i); j++)
+							this_data[j] = this->data[j%current_dim_prod]
+						this_curser = this_curser + current_dim_prod * other_shape.at(i);
+					}
+					else if (other_shape.at(i) == 1)
+					{
+						other_shape.at(i) = this_shape.at(i);
+						for (int j = other_curser; j < other_curser + current_dim_prod * this_shape.at(i); j++)
+							this_data[j] = this->data[j%current_dim_prod]
+							other_curser = other_curser + current_dim_prod * this_shape.at(i);
+					}
+					else
+						throw 0;
+				current_dim_prod *= this_shape.at(i);
+
+			}
+		}
+		catch (int e)
+		{
+			delete[] this_data;
+			delete[] other_data;
+			cout << "Tensors not compatible for broadcast" << e << '\n';
+		}
+		
+			
+			
+
+		Tensor<double> out;
+		vector<int> shape = this->shape;
+		double * out_data = new double[this->size];
+		for (int i = 0; i < this->size; i++) {
+			out_data[i] = this->data[i] + other.data[i];
+		}
+		out.setLinearData(out_data, shape);
+
+		delete[] this_data;
+		delete[] other_data;
+		return out;
 	}
 protected:
 	type * data;
@@ -216,7 +292,7 @@ public:
 		return out;
 	}
 	Tensor<double>& preActivate(Tensor<double>& in) {
-		return Tensor<double>::matmul(in, *(this->weights))+this->bias;
+		return Tensor<double>::matmul(in, *(this->weights))+*(this->bias);
 	}
 	Tensor<double>& forward(Tensor<double>& in) {
 		return this->activate(this->preActivate(in));
@@ -251,15 +327,15 @@ public:
 		this->input = input;
 	}
 	
-	Tensor<double>* forward(Tensor<double> input) {
-		Tensor<double>* current_out = &input;
+	Tensor<double>& forward(Tensor<double> input) {
+		Tensor<double> current_out = input;
 		for (vector<layer>::iterator it = this->layers.begin(); it != this->layers.end(); it++) {
-			current_out = it->forward(*current_out);
+			current_out = it->forward(current_out);
 		}
 		return current_out;
 			
 	}
-	Tensor<double>* forward() {
+	Tensor<double>& forward() {
 		return this->forward(this->input);
 	}
 private:
@@ -273,7 +349,7 @@ void test() {
 	Tensor<double> T2(ss, true);
 	cout << T1.toString()<<endl;
 	cout << T2.toString() << endl;
-	cout << Tensor<double>::matmul(T1,T2)->toString();
+	cout << Tensor<double>::matmul(T1,T2).toString();
 }
 int main() {
 	
