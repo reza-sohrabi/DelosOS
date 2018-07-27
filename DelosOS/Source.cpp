@@ -44,9 +44,9 @@ public:
 	type* getLinearData() {
 		return this->data;
 	}
-	void setLinearData(type* new_data , vector<int> shape) {
+	void setLinearData(type* new_data, vector<int> shape) {
 		delete[] this->data;
-		int size=1;
+		int size = 1;
 		for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
 			size *= *it;
 		}
@@ -76,7 +76,7 @@ public:
 				s.append(", ");
 		}
 		delete[] shape;
-		return s.substr(0, s.size()-rank-2);
+		return s.substr(0, s.size() - rank - 2);
 	}
 	void expandDim() {
 		this->rank++;
@@ -91,7 +91,7 @@ public:
 		}
 		catch (int e)
 		{
-			cout << "Tensors not compatible for matrix multiplication" <<e<< '\n';
+			cout << "Tensors not compatible for matrix multiplication" << e << '\n';
 		}
 		if (arg1.getRank() == 1) {
 			arg1.expandDim();
@@ -112,67 +112,63 @@ public:
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < columns_out; j++) {
 				for (int k = 0; k < columns; k++)
-					sum += mat1[i*columns + k] * mat2[j + k*columns_out];	
+					sum += mat1[i*columns + k] * mat2[j + k * columns_out];
 				out_data[out_index] = sum;
 				out_index++;
 				sum = 0.0;
 			}
 		}
-		Tensor<double> out;
-		out.setLinearData(out_data, out_shape);
-		return out;		
+		Tensor<double>* out = new Tensor<double>;
+		out->setLinearData(out_data, out_shape);
+		return *out;
 	}
-	Tensor<double>& operator+(Tensor<double> other) {
-		Tensor<double> this_tensor = *this;
-		Tensor<double> other_tensor = other;
-		int this_rank = this->rank;
-		int other_rank = other.rank;
+	void static broadcast(Tensor<type>& this_tensor, Tensor<type>& other_tensor) {
+		int this_rank = this_tensor.rank;
+		int other_rank = other_tensor.rank;
 		int dif_rank = abs(this_rank - other_rank);
-		vector<int> this_shape = this->shape;
-		vector<int> other_shape = other.shape;
+		vector<int> this_shape = this_tensor.shape;
+		vector<int> other_shape = other_tensor.shape;
+		vector<int>::iterator it;
 		if (this_rank >= other_rank) {
-			for (int i = 0; i < dif_rank; i++)
-				other_shape.insert(0, 1);
-			out_rank = this_rank;
+			for (int i = 0; i < dif_rank; i++) {
+				it = other_shape.begin();
+				other_shape.insert(it, 1);
+			}
+				
 		}
 		else {
-			for (int i = 0; i < dif_rank; i++)
-				this_shape.insert(0, 1);
-			out_rank = other_rank;
+			for (int i = 0; i < dif_rank; i++) {
+				it = this_shape.begin();
+				this_shape.insert(it, 1);
+			}
 		}
+		int out_rank = this_shape.size();
 		int out_size = 1;
 		for (int i = 0; i < out_rank; i++)
-			if (this_shape.at(i) > other_shape.at(i)
-				out_size * = this_shape.at(i);
+			if (this_shape.at(i) > other_shape.at(i))
+				out_size *= this_shape.at(i);
 			else
-				out_size *= other_shape.at(i)
-
-		try
-		{
-			double * this_data = new double[out_size];
-			double * other_data = new double[out_size];
+				out_size *= other_shape.at(i);
+		type * this_data = new type[out_size];
+		type * other_data = new type[out_size];
+		try {
 			int current_dim_prod = 1;
 			int this_curser = 0;
 			int other_curser = 0;
-			for (int i = out_rank-1; i <= 0; i--) {
-				
+			for (int i = out_rank - 1; i >= 0; i--) {
+
 				if (this_shape.at(i) != other_shape.at(i))
 					if (this_shape.at(i) == 1) {
 						this_shape.at(i) = other_shape.at(i);
-						for (int j = this_curser; j < this_curser + current_dim_prod * other_shape.at(i); j++)
-							this_data[j] = this->data[j%current_dim_prod]
-						this_curser = this_curser + current_dim_prod * other_shape.at(i);
+						
 					}
 					else if (other_shape.at(i) == 1)
 					{
 						other_shape.at(i) = this_shape.at(i);
-						for (int j = other_curser; j < other_curser + current_dim_prod * this_shape.at(i); j++)
-							this_data[j] = this->data[j%current_dim_prod]
-							other_curser = other_curser + current_dim_prod * this_shape.at(i);
+						
 					}
 					else
 						throw 0;
-				current_dim_prod *= this_shape.at(i);
 
 			}
 		}
@@ -182,21 +178,63 @@ public:
 			delete[] other_data;
 			cout << "Tensors not compatible for broadcast" << e << '\n';
 		}
+		int out_current_dim_prod = 1;
+		int this_current_dim_prod = 1;
+		int other_current_dim_prod = 1;
+		int j = out_rank - 1;
+		for (int i = 0; i < out_size; i++) {
+			if (j >= 0) {
+				if (i%out_current_dim_prod == 0) {
+					out_current_dim_prod *= this_shape.at(j);
+					this_current_dim_prod *= this_tensor.shape.at(j);
+					other_current_dim_prod *= other_tensor.shape.at(j);
+					j--;
+				}
+			}
 		
-			
-			
-
-		Tensor<double> out;
-		vector<int> shape = this->shape;
-		double * out_data = new double[this->size];
-		for (int i = 0; i < this->size; i++) {
-			out_data[i] = this->data[i] + other.data[i];
+			other_data[i] = other_tensor.data[i%other_current_dim_prod];
+			this_data[i] = this_tensor.data[i%this_current_dim_prod];
 		}
-		out.setLinearData(out_data, shape);
+		this_tensor.setLinearData(this_data, this_shape);
+		other_tensor.setLinearData(other_data, other_shape);
+	}
+	Tensor<type>& operator=(const Tensor<type>& other) {
+		type* this_data = new type[other.size];
+		for (int i = 0; i < other.size; i++)
+			this_data[i] = other.data[i];
+		this->setLinearData(this_data, other.shape);
+		return *this;
+	}
 
-		delete[] this_data;
-		delete[] other_data;
-		return out;
+	Tensor<type>& operator+(Tensor<type> other) {
+		Tensor<type> this_tensor ;
+		this_tensor  = *this;
+		Tensor<type> other_tensor;
+		other_tensor = other;
+		broadcast(this_tensor, other_tensor);
+		Tensor<type>* out = new Tensor<type>;
+		vector<int> out_shape = this_tensor.shape;
+		type * out_data = new type[this_tensor.size];
+		for (int i = 0; i < this_tensor.size; i++) {
+			out_data[i] = this_tensor.data[i] + other_tensor.data[i];
+		}
+		out->setLinearData(out_data, out_shape);
+		return *out;
+	}
+	Tensor<type>& operator*(Tensor<type> other) {
+		Tensor<type> this_tensor;
+		this_tensor = *this;
+		Tensor<type> other_tensor;
+		other_tensor = other;
+		broadcast(this_tensor, other_tensor);
+		Tensor<type>* out = new Tensor<type>;
+		vector<int> out_shape = this_tensor.shape;
+		type * out_data = new type[this_tensor.size];
+		for (int i = 0; i < this_tensor.size; i++) {
+			out_data[i] = this_tensor.data[i] * other_tensor.data[i];
+		}
+		out->setLinearData(out_data, out_shape);
+		return *out;
 	}
 protected:
 	type * data;
@@ -233,7 +271,7 @@ public:
 		return 1.0 / (1 + exp(-in));
 	}
 	static double tanh(double in) {
-		return (exp(in)- exp(-in)) / (exp(in) + exp(-in));
+		return (exp(in) - exp(-in)) / (exp(in) + exp(-in));
 	}
 	static double relu(double in) {
 		return max(0.0, in);
@@ -247,7 +285,7 @@ public:
 private:
 
 };
-class linearLayer: public layer{
+class linearLayer : public layer {
 public:
 	linearLayer() {
 	}
@@ -261,7 +299,7 @@ public:
 		this->activation = activation;
 		shape.push_back(n_inputs);
 		shape.push_back(n_units);
-		weights = new Tensor<double> (shape, true);
+		weights = new Tensor<double>(shape, true);
 		vector<int> bias_shape = { n_units };
 		bias = new Tensor<double>(bias_shape, true);
 	}
@@ -272,7 +310,7 @@ public:
 		this->weights->setLinearData(weights, shape);
 	}
 	Tensor<double>& activate(Tensor<double>& in) {
-		if(this->activation=="none")
+		if (this->activation == "none")
 			return in;
 		Tensor<double> out;
 		double* out_data = new double[in.getSize()];
@@ -292,7 +330,7 @@ public:
 		return out;
 	}
 	Tensor<double>& preActivate(Tensor<double>& in) {
-		return Tensor<double>::matmul(in, *(this->weights))+*(this->bias);
+		return Tensor<double>::matmul(in, *(this->weights)) + *(this->bias);
 	}
 	Tensor<double>& forward(Tensor<double>& in) {
 		return this->activate(this->preActivate(in));
@@ -321,19 +359,19 @@ private:
 };
 class sequential : public model {
 public:
-	sequential(){}
+	sequential() {}
 	sequential(vector<layer> layers, Tensor<double> input) {
 		this->layers = layers;
 		this->input = input;
 	}
-	
+
 	Tensor<double>& forward(Tensor<double> input) {
 		Tensor<double> current_out = input;
 		for (vector<layer>::iterator it = this->layers.begin(); it != this->layers.end(); it++) {
 			current_out = it->forward(current_out);
 		}
 		return current_out;
-			
+
 	}
 	Tensor<double>& forward() {
 		return this->forward(this->input);
@@ -342,19 +380,31 @@ private:
 	vector<layer> layers;
 	Tensor<double> input;
 };
-void test() {
-	vector<int> s{2,3,3};
-	vector<int> ss{3,2};
+void test_matmul() {
+	vector<int> s{ 2,3,3 };
+	vector<int> ss{ 3,2 };
 	Tensor<double> T1(s, true);
 	Tensor<double> T2(ss, true);
-	cout << T1.toString()<<endl;
+	cout << T1.toString() << endl;
 	cout << T2.toString() << endl;
-	cout << Tensor<double>::matmul(T1,T2).toString();
+	cout << Tensor<double>::matmul(T1, T2).toString();
+}
+void test_add() {
+	vector<int> s{ 1,3,3 };
+	vector<int> ss{ 2,3,3 };
+	Tensor<double> T1(s, true);
+	Tensor<double> T2(ss, true);
+	cout << T1.toString() << endl<<endl;
+	cout << T2.toString() << endl<<endl;
+	Tensor<double> res;
+	res = (T1 + T2);
+	cout << res.toString();
 }
 int main() {
-	
 
-	test();
+
+	/*test_matmul();*/
+	test_add();
 	char c = getchar();
 	return 0;
 
