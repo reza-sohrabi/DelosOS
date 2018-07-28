@@ -13,13 +13,13 @@ using namespace std;
 template<class type> class Tensor {
 public:
 	Tensor();
-	Tensor(vector<int> shape, bool random_initialization);
+	Tensor(const vector<int>& shape, bool random_initialization);
 	~Tensor();
 	int getRank();
 	int getSize();
 	vector<int> getShape();
 	type* getLinearData();
-	void setLinearData(type* new_data, vector<int> shape);
+	void setLinearData(type* new_data,const vector<int>& shape);
 	type* getDataFrom(string pattern);
 	string toString();
 	void expandDim();
@@ -27,8 +27,8 @@ public:
 	void static broadcast(Tensor<type>& this_tensor, Tensor<type>& other_tensor);
 	Tensor<type>& operator=(const Tensor<type>& other);
 
-	Tensor<type>& operator+(Tensor<type> other);
-	Tensor<type>& operator*(Tensor<type> other);
+	Tensor<type>& operator+(const Tensor<type>& other);
+	Tensor<type>& operator*(const Tensor<type>& other);
 protected:
 	type * data;
 	int rank;

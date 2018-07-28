@@ -7,22 +7,22 @@
 #include <math.h>
 #include <iomanip>
 using namespace std;
-
+static default_random_engine generator;
 
 template <class type> Tensor<type>::Tensor() {
 
 }
-template <class type> Tensor<type>::Tensor(vector<int> shape, bool random_initialization) {
+template <class type> Tensor<type>::Tensor(const vector<int>& shape, bool random_initialization) {
 	this->rank = shape.size();
 	this->shape = shape;
 	int size = 1;
-	for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
+	for (vector<int>::iterator it = this->shape.begin(); it != this->shape.end(); it++) {
 		size *= *it;
 	}
 	this->size = size;
 	data = new type[this->size];
 	if (random_initialization && (is_same< type, double>::value)) {
-		default_random_engine generator;
+		
 		normal_distribution<double> distribution(0, 1);
 		for (int i = 0; i < size; i++) {
 			this->data[i] = distribution(generator);
@@ -45,16 +45,17 @@ template <class type>	vector<int> Tensor<type>::getShape() {
 template <class type>	type* Tensor<type>::getLinearData() {
 	return this->data;
 }
-template <class type>	void Tensor<type>::setLinearData(type* new_data, vector<int> shape) {
+template <class type>	void Tensor<type>::setLinearData(type* new_data, const vector<int>& shape) {
 	delete[] this->data;
-	int size = 1;
-	for (vector<int>::iterator it = shape.begin(); it != shape.end(); it++) {
-		size *= *it;
-	}
-	this->size = size;
 	this->rank = shape.size();
 	this->shape = shape;
 	this->data = new_data;
+	int size = 1;
+	for (vector<int>::iterator it = this->shape.begin(); it != this->shape.end(); it++) {
+		size *= *it;
+	}
+	this->size = size;
+	
 }
 template <class type>	type* Tensor<type>::getDataFrom(string pattern) {
 	//TODO
@@ -92,7 +93,7 @@ template <class type> Tensor<double>& Tensor<type>::matmul(Tensor<double> arg1, 
 	}
 	catch (int e)
 	{
-		cout << "Tensors not compatible for matrix multiplication" << e << '\n';
+		cout << "Tensors not compatible for matrix multiplication error:" << e << '\n';
 	}
 	if (arg1.getRank() == 1) {
 		arg1.expandDim();
@@ -169,7 +170,7 @@ template <class type> void Tensor<type>::broadcast(Tensor<type>& this_tensor, Te
 
 				}
 				else
-					throw 0;
+					throw 1;
 
 		}
 	}
@@ -177,7 +178,7 @@ template <class type> void Tensor<type>::broadcast(Tensor<type>& this_tensor, Te
 	{
 		delete[] this_data;
 		delete[] other_data;
-		cout << "Tensors not compatible for broadcast" << e << '\n';
+		cout << "Tensors not compatible for broadcast error:" << e << '\n';
 	}
 	int out_current_dim_prod = 1;
 	int this_current_dim_prod = 1;
@@ -207,7 +208,7 @@ template <class type>	Tensor<type>& Tensor<type>::operator=(const Tensor<type>& 
 	return *this;
 }
 
-template <class type>	Tensor<type>& Tensor<type>::operator+(Tensor<type> other) {
+template <class type>	Tensor<type>& Tensor<type>::operator+(const Tensor<type>& other) {
 	Tensor<type> this_tensor;
 	this_tensor = *this;
 	Tensor<type> other_tensor;
@@ -222,7 +223,7 @@ template <class type>	Tensor<type>& Tensor<type>::operator+(Tensor<type> other) 
 	out->setLinearData(out_data, out_shape);
 	return *out;
 }
-template <class type>	Tensor<type>& Tensor<type>::operator*(Tensor<type> other) {
+template <class type>	Tensor<type>& Tensor<type>::operator*(const Tensor<type>& other) {
 	Tensor<type> this_tensor;
 	this_tensor = *this;
 	Tensor<type> other_tensor;
