@@ -31,6 +31,36 @@ public:
 private:
 
 };
+class convLayer : public layer {
+	/*A class that implements the convolutional layer in a neural network*/
+public:
+	convLayer() {
+	}
+	convLayer(int n_filters, int kernel_size[], vector<int> input_shape, string activation) {
+		/*Constructor that initializes weights and bias*/
+		this->n_filters = n_filters;
+		this->input_shape = input_shape;
+		this->activation = activation;
+		shape.push_back(kernel_size[0]);
+		shape.push_back(kernel_size[1]);
+		shape.push_back(*input_shape.end());
+		shape.push_back(n_filters);
+		weights = new Tensor<double>(shape, true);
+		vector<int> bias_shape = { n_filters };
+		bias = new Tensor<double>(bias_shape, true);
+	}
+	~convLayer() {
+		delete[] this->weights;
+		delete[] this->bias;
+	}
+private:
+	int n_filters;// number of hidden units
+	vector<int> input_shape;// input shape
+	string activation;// type of activation
+	vector<int> shape; // shape of the weights
+	Tensor<double>* weights;// pointer to the weights
+	Tensor<double>* bias;// pointer to the bias
+};
 class linearLayer : public layer {
 	/*A class that implements the dense layer in a neural network*/
 public:
@@ -48,8 +78,8 @@ public:
 		bias = new Tensor<double>(bias_shape, true);
 	}
 	~linearLayer() {
-		delete this->weights;
-		delete this->bias;
+		delete[] this->weights;
+		delete[] this->bias;
 	}
 	Tensor<double>* getWeights() {
 		/*Method that returns the pointer to the weights*/
@@ -107,8 +137,8 @@ private:
 class model {
 	/*Base class for neural network model*/
 public:
-private:
-
+protected:
+	vector<Tensor<double>> layer_outputs;
 
 };
 class optimizer {
@@ -136,7 +166,7 @@ public:
 		Tensor<double> current_out = input;
 		for (vector<layer*>::iterator it = this->layers.begin(); it != this->layers.end(); it++) {
 			current_out = (*it)->forward(current_out);
-			layer_outputs.push_back(current_out);
+			this->layer_outputs.push_back(current_out);
 		}
 		return current_out;
 
@@ -152,7 +182,7 @@ public:
 private:
 	vector<layer*> layers;// layers in the model
 	Tensor<double> input;// input Tensor to the model
-	vector<Tensor<double>> layer_outputs;
+	
 };
 void test_matmul() {
 	vector<int> s{ 2,3,3 };
